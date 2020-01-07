@@ -1,0 +1,11 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: metal3-operator
+subjects:
+- kind: ServiceAccount
+  name: metal3-operator
+roleRef:
+  kind: Role
+  name: metal3-operator
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,7 @@
+apiVersion: baremetalhost.metal3.io/v1alpha1
+kind: Baremetal
+metadata:
+  name: example-baremetal
+spec:
+  # Add fields here
+  size: 3
