@@ -2,6 +2,7 @@ apiVersion: baremetalhost.metal3.io/v1alpha1
 kind: Baremetal
 metadata:
   name: example-baremetal
+  namespace: metal3-operator
 spec:
   # Add fields here
   size: 3

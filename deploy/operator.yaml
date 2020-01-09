@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: metal3-operator
+  namespace: metal3-operator
 spec:
   replicas: 1
   selector:
