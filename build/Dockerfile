@@ -4,6 +4,9 @@ ENV OPERATOR=/usr/local/bin/metal3-operator \
     USER_UID=1001 \
     USER_NAME=metal3-operator
 
+# install templates
+COPY templates /usr/local/templates
+
 # install operator binary
 COPY build/_output/bin/metal3-operator ${OPERATOR}
 

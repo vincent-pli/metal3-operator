@@ -16,7 +16,7 @@ spec:
       containers:
         - name: metal3-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: index.docker.io/vincentpli/metal3-operator:v0.0.1
           command:
           - metal3-operator
           imagePullPolicy: Always
@@ -31,3 +31,5 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "metal3-operator"
+            - name: TEMPLATES_PATH
+              value: "/usr/local/templates"

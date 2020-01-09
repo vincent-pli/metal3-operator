@@ -3,12 +3,15 @@ module github.com/vincent-pli/metal3-operator
 go 1.13
 
 require (
+	github.com/go-logr/logr v0.1.0
+	github.com/jcrossley3/manifestival v0.0.0-20191210210340-41c7c3a22365
 	github.com/operator-framework/operator-sdk v0.13.0
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.4.0
+	sigs.k8s.io/kustomize/v3 v3.3.1
 )
 
 // Pinned to kubernetes-1.16.2
