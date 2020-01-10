@@ -16,9 +16,8 @@ limitations under the License.
 package imagereplacement
 
 import (
-	mf "github.com/jcrossley3/manifestival"
-	tektonv1alpha1 "github.com/openshift/tektoncd-pipeline-operator/pkg/apis/tekton/v1alpha1"
-	"github.com/openshift/tektoncd-pipeline-operator/pkg/controller/install/common"
+	baremetalhostv1alpha1 "github.com/vincent-pli/metal3-operator/pkg/apis/baremetalhost/v1alpha1"
+	"github.com/vincent-pli/metal3-operator/pkg/extension/common"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,18 +27,18 @@ import (
 
 var (
 	extension = common.Extension{
-		Transformers: []mf.Transformer{egress},
+		Transformers: []common.Transformer{egress},
 	}
-	log            = logf.Log.WithName("image-replacement")
-	scheme         *runtime.Scheme
-	tektonPipeline *tektonv1alpha1.Install
+	log       = logf.Log.WithName("image-replacement")
+	scheme    *runtime.Scheme
+	baremetal baremetalhostv1alpha1.Baremetal
 )
 
 // Configure minikube if we're soaking in it
-func Configure(c client.Client, s *runtime.Scheme, install *tektonv1alpha1.Install) (*common.Extension, error) {
-	if install.Spec.Registry.Override != nil {
+func Configure(c client.Client, s *runtime.Scheme, baremetal *baremetalhostv1alpha1.Baremetal) (*common.Extension, error) {
+	if baremetal.Spec.Registry.Override != nil {
 		scheme = s
-		tektonPipeline = install
+		baremetal = baremetal
 		return &extension, nil
 	}
 
@@ -52,7 +51,7 @@ func egress(u *unstructured.Unstructured) error {
 		if err := scheme.Convert(u, deploy, nil); err != nil {
 			return err
 		}
-		registry := tektonPipeline.Spec.Registry
+		registry := baremetal.Spec.Registry
 		err := UpdateDeployment(deploy, &registry, log)
 		if err != nil {
 			return err

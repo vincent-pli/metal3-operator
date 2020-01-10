@@ -16,9 +16,7 @@ limitations under the License.
 package common
 
 import (
-	mf "github.com/jcrossley3/manifestival"
-	// servingv1alpha1 "github.com/knative/serving-operator/pkg/apis/serving/v1alpha1"
-	tektonv1alpha1 "github.com/openshift/tektoncd-pipeline-operator/pkg/apis/tekton/v1alpha1"
+	baremetalhostv1alpha1 "github.com/vincent-pli/metal3-operator/pkg/apis/baremetalhost/v1alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,18 +25,20 @@ import (
 
 var log = logf.Log.WithName("common")
 
-type Activities []func(client.Client, *runtime.Scheme, *tektonv1alpha1.Install) (*Extension, error)
-type Extender func(*tektonv1alpha1.Install) error
+type Activities []func(client.Client, *runtime.Scheme, *baremetalhostv1alpha1.Baremetal) (*Extension, error)
+type Extender func(*baremetalhostv1alpha1.Baremetal) error
+type Transformer func(u *unstructured.Unstructured) error
 type Extensions []Extension
 type Extension struct {
-	Transformers []mf.Transformer
+	Transformers []Transformer
 	PreInstalls  []Extender
 	PostInstalls []Extender
 }
 
-func (activities Activities) Extend(c client.Client, scheme *runtime.Scheme, install *tektonv1alpha1.Install) (result Extensions, err error) {
+func (activities Activities) Extend(c client.Client, scheme *runtime.Scheme, baremetal *baremetalhostv1alpha1.Baremetal) (Extensions, error) {
+	result := Extensions{}
 	for _, fn := range activities {
-		ext, err := fn(c, scheme, install)
+		ext, err := fn(c, scheme, baremetal)
 		if err != nil {
 			return result, err
 		}
@@ -46,28 +46,40 @@ func (activities Activities) Extend(c client.Client, scheme *runtime.Scheme, ins
 			result = append(result, *ext)
 		}
 	}
-	return
+	return result, nil
 }
 
-func (exts Extensions) Transform(instance *tektonv1alpha1.Install) []mf.Transformer {
-	result := []mf.Transformer{
-		mf.InjectOwner(instance),
-		mf.InjectNamespace(instance.GetNamespace()),
-	}
+func (exts Extensions) generate(baremetal *baremetalhostv1alpha1.Baremetal) []Transformer {
+	result := []Transformer{}
 	for _, extension := range exts {
 		result = append(result, extension.Transformers...)
 	}
-	// Let any config in instance override everything else
+	// Transformer will run in order, so can add some more Transformer here
 	return append(result, func(u *unstructured.Unstructured) error {
-
 		return nil
 	})
 }
 
-func (exts Extensions) PreInstall(instance *tektonv1alpha1.Install) error {
+func (exts Extensions) Transformer(resources []*unstructured.Unstructured, baremetal *baremetalhostv1alpha1.Baremetal) ([]*unstructured.Unstructured, error) {
+	transformers := exts.generate(baremetal)
+	var results []*unstructured.Unstructured
+	for i := 0; i < len(resources); i++ {
+		spec := resources[i].DeepCopy()
+		for _, transform := range transformers {
+			err := transform(spec)
+			if err != nil {
+				return nil, err
+			}
+		}
+		results = append(results, spec)
+	}
+	return results, nil
+}
+
+func (exts Extensions) PreInstall(baremetal *baremetalhostv1alpha1.Baremetal) error {
 	for _, extension := range exts {
 		for _, f := range extension.PreInstalls {
-			if err := f(instance); err != nil {
+			if err := f(baremetal); err != nil {
 				return err
 			}
 		}
@@ -75,10 +87,10 @@ func (exts Extensions) PreInstall(instance *tektonv1alpha1.Install) error {
 	return nil
 }
 
-func (exts Extensions) PostInstall(instance *tektonv1alpha1.Install) error {
+func (exts Extensions) PostInstall(baremetal *baremetalhostv1alpha1.Baremetal) error {
 	for _, extension := range exts {
 		for _, f := range extension.PostInstalls {
-			if err := f(instance); err != nil {
+			if err := f(baremetal); err != nil {
 				return err
 			}
 		}

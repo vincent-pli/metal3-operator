@@ -5,6 +5,7 @@ import (
 
 	baremetalhostv1alpha1 "github.com/vincent-pli/metal3-operator/pkg/apis/baremetalhost/v1alpha1"
 	"github.com/vincent-pli/metal3-operator/pkg/deployer"
+	"github.com/vincent-pli/metal3-operator/pkg/extension/common"
 	"github.com/vincent-pli/metal3-operator/pkg/render"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,7 +19,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_baremetal")
+var (
+	log        = logf.Log.WithName("controller_baremetal")
+	activities common.Activities
+)
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
@@ -105,6 +109,15 @@ func (r *ReconcileBaremetal) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 	// Run extensions
+	extensions, err := activities.Extend(r.client, r.scheme, instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	resources, err = extensions.Transformer(resources, instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// Deploy
 	for _, res := range resources {
 		err = deployer.Deploy(r.client, res)

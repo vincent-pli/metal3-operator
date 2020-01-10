@@ -23,7 +23,7 @@ import (
 const TemplatesPathEnvVar = "TEMPLATES_PATH"
 
 var components = []string{
-	"baremeal-operator",
+	"baremetal-operator",
 	"cluster-api-baremetal",
 }
 

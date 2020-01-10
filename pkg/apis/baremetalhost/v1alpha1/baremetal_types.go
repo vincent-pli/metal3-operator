@@ -12,6 +12,17 @@ type BaremetalSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	Registry Registry `json:"registry,omitempty"`
+}
+
+// Registry defines image overrides of knative images.
+// The default value is used as a default format to override for all knative deployments.
+// The override values are specific to each knative deployment.
+// +k8s:openapi-gen=true
+type Registry struct {
+	// A map of a container name or arg key to the full image location of the individual knative container.
+	// +optional
+	Override map[string]string `json:"override,omitempty"`
 }
 
 // BaremetalStatus defines the observed state of Baremetal
